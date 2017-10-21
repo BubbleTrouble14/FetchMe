@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "303332028746",
+    "firebase_url": "https://fetchme-70760.firebaseio.com",
+    "project_id": "fetchme-70760",
+    "storage_bucket": "fetchme-70760.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303332028746:android:d57a69a7a1aa03cc",
+        "android_client_info": {
+          "package_name": "com.example.ronald.fetchme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "303332028746-lt7n1ak5tkk6n9m23duf4utu8bm6gh6h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD17spwsDEidQPagMDbg5w_71DPM-6BcFE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

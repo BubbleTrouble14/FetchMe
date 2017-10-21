@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">FetchMe</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="register">Register</string>
+    <string name="sign_in">Sign In</string>
+    <string name="save">Save</string>
+    <string name="name">Name</string>
+    <string name="surname">Surname</string>
+    <string name="phone_number">Phone Number</string>
+
+    <string name="create_account">Create Account</string>
+    <string name="enter_password">Enter Your Password</string>
+
+    <string name="change_password">Change Password</string>
+    <string name="delete_account">Delete Account</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+</resources>
