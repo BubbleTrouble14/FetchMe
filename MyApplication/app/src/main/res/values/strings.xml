@@ -13,6 +13,11 @@
     <string name="surname">Surname</string>
     <string name="phone_number">Phone Number</string>
 
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="repeat_password">Repeat New Password</string>
+
+
     <string name="create_account">Create Account</string>
     <string name="enter_password">Enter Your Password</string>
 

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -14,7 +15,7 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
-    private EditText editText_name, editText_surname, editText_email, editText_phonenumber;
+    private EditText editText_name, editText_surname, editText_email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +25,6 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
         editText_name = (EditText)findViewById(R.id.editText_acc_name);
         editText_surname = (EditText)findViewById(R.id.editText_acc_surname);
         editText_email = (EditText)findViewById(R.id.editText_acc_email);
-        editText_phonenumber = (EditText)findViewById(R.id.editText_acc_phonenumber);
 
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = this;
@@ -52,9 +52,8 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
             editText_email.setText(user.getEmail());
             String name = user.getDisplayName();
             String[] info = name.split("\\s+");
-            editText_name.setText(info[1]);
-            editText_surname.setText(info[0]);
-            editText_phonenumber.setText(user.getPhoneNumber());
+            editText_name.setText(info[0]);
+            editText_surname.setText(info[1]);
         }
         else
         {
@@ -63,5 +62,10 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
             Intent i = new Intent(this, AuthenticationActivity.class);
             startActivity(i);
         }
+    }
+
+    public void onSettingsChangePasswordClicked(View v)
+    {
+        startActivity(new Intent(this, ChangePasswordActivity.class));
     }
 }

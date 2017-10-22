@@ -22,7 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    EditText editText_email, editText_password, editText_name, editText_surname, editText_phone_number;
+    EditText editText_email, editText_password, editText_name, editText_surname;
     Button sign_up;
 
     //Firebase
@@ -38,7 +38,6 @@ public class SignUpActivity extends AppCompatActivity {
         editText_name = (EditText) findViewById(R.id.editText_reg_name);
         editText_surname = (EditText) findViewById(R.id.editText_reg_surname);
         editText_password = (EditText) findViewById(R.id.editText_reg_password);
-        editText_phone_number = (EditText) findViewById(R.id.editText_reg_phone_number);
         sign_up = (Button) findViewById(R.id.btn_sign_up);
 
         mAuth = FirebaseAuth.getInstance();
@@ -136,19 +135,12 @@ public class SignUpActivity extends AppCompatActivity {
         } else {
             editText_surname.setError(null);
         }
-
-        if (TextUtils.isEmpty(editText_phone_number.getText().toString())) {
-            editText_phone_number.setError("Required");
-            result = false;
-        } else {
-            editText_phone_number.setError(null);
-        }
         return result;
     }
 
     private void writeNewUser(String userId, String name, String email) {
         User user = new User(name, email);
 
-        mDatabase.child("users").child(userId).setValue(user);
+       // mDatabase.child("users").child(userId).setValue(user);
     }
 }
