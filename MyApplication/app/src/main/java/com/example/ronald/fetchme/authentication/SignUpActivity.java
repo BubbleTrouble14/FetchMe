@@ -1,4 +1,4 @@
-package com.example.ronald.fetchme;
+package com.example.ronald.fetchme.authentication;
 
 import android.app.ProgressDialog;
 import android.support.annotation.NonNull;
@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.ronald.fetchme.R;
 import com.example.ronald.fetchme.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;

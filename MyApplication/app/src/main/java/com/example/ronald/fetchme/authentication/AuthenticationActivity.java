@@ -1,4 +1,4 @@
-package com.example.ronald.fetchme;
+package com.example.ronald.fetchme.authentication;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.ronald.fetchme.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 

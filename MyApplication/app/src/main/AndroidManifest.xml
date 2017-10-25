@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.ronald.fetchme">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,11 +21,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SignUpActivity" />
-        <activity android:name=".SignInActivity" />
-        <activity android:name=".AuthenticationActivity" />
-        <activity android:name=".AccountSettingsActivity" />
-        <activity android:name=".ChangePasswordActivity"></activity>
+        <activity android:name=".authentication.SignUpActivity" />
+        <activity android:name=".authentication.SignInActivity" />
+        <activity android:name=".authentication.AuthenticationActivity" />
+        <activity android:name=".authentication.AccountSettingsActivity" />
+        <activity android:name=".authentication.ChangePasswordActivity"></activity>
     </application>
 
 </manifest>

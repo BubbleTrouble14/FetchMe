@@ -1,4 +1,4 @@
-package com.example.ronald.fetchme;
+package com.example.ronald.fetchme.authentication;
 
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -9,7 +9,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.ronald.fetchme.R;
-import com.example.ronald.fetchme.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
