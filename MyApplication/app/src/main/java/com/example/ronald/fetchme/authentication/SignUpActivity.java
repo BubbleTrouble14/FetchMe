@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.example.ronald.fetchme.R;
 import com.example.ronald.fetchme.models.User;
+import com.example.ronald.fetchme.utils.Constants;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -35,11 +36,11 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        editText_email = (EditText) findViewById(R.id.editText_reg_email);
-        editText_name = (EditText) findViewById(R.id.editText_reg_name);
-        editText_surname = (EditText) findViewById(R.id.editText_reg_surname);
-        editText_password = (EditText) findViewById(R.id.editText_reg_password);
-        sign_up = (Button) findViewById(R.id.btn_sign_up);
+        editText_email =  findViewById(R.id.editText_reg_email);
+        editText_name = findViewById(R.id.editText_reg_name);
+        editText_surname =  findViewById(R.id.editText_reg_surname);
+        editText_password =  findViewById(R.id.editText_reg_password);
+        sign_up = findViewById(R.id.btn_sign_up);
 
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
@@ -103,7 +104,7 @@ public class SignUpActivity extends AppCompatActivity {
     private void onAuthSuccess(FirebaseUser user) {
         String username = editText_name.getText().toString() + " " + editText_surname.getText().toString();
 
-        writeNewUser(user.getUid(), username, user.getEmail());
+        writeNewUser(username, user.getEmail(), user.getUid());
 
         finish();
     }
@@ -139,9 +140,9 @@ public class SignUpActivity extends AppCompatActivity {
         return result;
     }
 
-    private void writeNewUser(String userId, String name, String email) {
-        User user = new User(name, email);
+    private void writeNewUser(String name, String email, String uid) {
+        User user = new User(name, email, "", uid);
 
-       // mDatabase.child("users").child(userId).setValue(user);
+        mDatabase.child(Constants.USER_KEY).child(uid).setValue(user);
     }
 }

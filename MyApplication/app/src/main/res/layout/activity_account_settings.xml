@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:screenOrientation="portrait"
     android:focusable="true" android:focusableInTouchMode="true"
     tools:context="com.example.ronald.fetchme.authentication.AccountSettingsActivity">
 
@@ -105,7 +106,7 @@
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="EMAIL ADRESS"
+        android:text="EMAIL ADDRESS"
         android:layout_marginLeft="8dp"
         app:layout_constraintLeft_toLeftOf="@+id/editText_acc_email"
         android:layout_marginTop="8dp"

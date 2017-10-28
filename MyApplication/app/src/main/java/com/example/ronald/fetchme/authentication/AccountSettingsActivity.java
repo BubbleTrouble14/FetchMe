@@ -14,7 +14,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.ronald.fetchme.R;
+import com.example.ronald.fetchme.models.User;
+import com.example.ronald.fetchme.utils.Constants;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -22,6 +26,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -34,6 +40,8 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
     private EditText editText_name, editText_surname, editText_email;
     private String[] info;
     private StorageReference mStorage;
+    private DatabaseReference mDatabase;
+
     private static final int GALLERY_INTENT = 1;
 
     @Override
@@ -60,7 +68,12 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
 
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance().getReference();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         mAuthListener = this;
+
+        Glide.with(this)
+                .load(mAuth.getCurrentUser().getPhotoUrl())
+                .into(picture);
     }
 
     @Override
@@ -69,10 +82,12 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
 
         if(requestCode == GALLERY_INTENT)
         {
-            final Uri uri = data.getData();
-
             if(resultCode == RESULT_OK) {
-                final StorageReference filePath = mStorage.child("Profile_Pictures").child(mAuth.getUid()).child(uri.getLastPathSegment());
+                final Uri uri = data.getData();
+                final StorageReference filePath = mStorage.child(Constants.USER_KEY).child(mAuth.getUid()).child("profile_image");
+
+                RequestOptions requestOptions = new RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL);
+                Glide.with(AccountSettingsActivity.this).load(uri).apply(requestOptions).into(picture);
 
                 filePath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -82,7 +97,17 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
                             @Override
                             public void onSuccess(Uri uri)
                             {
-                                Glide.with(AccountSettingsActivity.this).load(uri).into(picture);
+                                FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                                User user = new User(firebaseUser.getDisplayName(), firebaseUser.getEmail(), String.valueOf(uri), firebaseUser.getUid());
+                                mDatabase.child(Constants.USER_KEY).child(mAuth.getUid()).setValue(user);
+
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setPhotoUri(uri)
+                                        .build();
+
+                                mAuth.getCurrentUser().updateProfile(profileUpdates);
+
+                                Toast.makeText(AccountSettingsActivity.this, "Worked", Toast.LENGTH_SHORT).show();
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
@@ -92,19 +117,6 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
                         });
 
 
-
-//                        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-//                                .setPhotoUri(uri)
-//                                .build();
-//
-//                        mAuth.getCurrentUser().updateProfile(profileUpdates);
-//                        picture.setImageURI(mAuth.getCurrentUser().getPhotoUrl());
-//
-//                        Glide.with(AccountSettingsActivity.this)
-//                                .load(uri)
-//                                .into(picture);
-
-                        Toast.makeText(AccountSettingsActivity.this, "Successful", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
