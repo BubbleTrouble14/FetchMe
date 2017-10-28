@@ -1,7 +1,8 @@
 package com.example.ronald.fetchme;
 
+import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
+import android.net.Uri;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -12,24 +13,30 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.ronald.fetchme.authentication.AccountSettingsActivity;
 import com.example.ronald.fetchme.authentication.AuthenticationActivity;
+import com.example.ronald.fetchme.models.User;
+import com.example.ronald.fetchme.utils.Constants;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
     //Firebase
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
     private DatabaseReference mDatabase;
 
     private TextView txtEmail, txtUser;
+    private ImageView profile_picture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -37,52 +44,51 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         View header=navigationView.getHeaderView(0);
+        profile_picture = header.findViewById(R.id.imageView_nav_profile_picture);
 
-        txtEmail = (TextView) header.findViewById(R.id.navTxtEmail);
-        txtUser = (TextView) header.findViewById(R.id.navTxtUsername);
+        txtEmail = header.findViewById(R.id.navTxtEmail);
+        txtUser = header.findViewById(R.id.navTxtUsername);
 
         mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase =  FirebaseDatabase.getInstance().getReference(Constants.USER_KEY);
 
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
+        mDatabase.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
             @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-
-                if(user != null)
-                {
-                    txtEmail.setText(user.getEmail());
-                    txtUser.setText(user.getDisplayName());
-                }
-                else
-                {
-                    Toast.makeText(MainActivity.this, "Not logged in.", Toast.LENGTH_SHORT).show();
-                    finish();
-                    Intent i = new Intent(MainActivity.this, AuthenticationActivity.class);
-                    startActivity(i);
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.getValue() != null) {
+                    User user = dataSnapshot.getValue(User.class);
+                    Glide.with(MainActivity.this)
+                            .load(user.photo_url)
+                            .into(profile_picture);
+                    txtEmail.setText(user.email);
+                    txtUser.setText(user.username);
                 }
             }
-        };
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
         getMenuInflater().inflate(R.menu.main, menu);
-
         return true;
     }
 
@@ -125,20 +131,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mAuth.removeAuthStateListener(mAuthListener);
     }
 }
