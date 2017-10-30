@@ -1,6 +1,7 @@
 package com.example.ronald.fetchme.authentication;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,29 +13,29 @@ import android.widget.Toast;
 
 import com.example.ronald.fetchme.MainActivity;
 import com.example.ronald.fetchme.R;
+import com.example.ronald.fetchme.utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class SignInActivity extends AppCompatActivity {
+public class SignInActivity extends BaseActivity {
 
     EditText email, password;
     Button sign_in;
 
     //Firebase
     FirebaseAuth mAuth;
-    FirebaseAuth.AuthStateListener mAuthListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        email = (EditText) findViewById(R.id.editText_email);
-        password = (EditText) findViewById(R.id.editText_password);
+        email = findViewById(R.id.editText_email);
+        password = findViewById(R.id.editText_password);
 
-        sign_in = (Button) findViewById(R.id.btn_sign_in);
+        sign_in = findViewById(R.id.btn_sign_in);
 
         mAuth = FirebaseAuth.getInstance();
     }
@@ -45,6 +46,8 @@ public class SignInActivity extends AppCompatActivity {
 
         userEmail = email.getText().toString().trim();
         userPassword = password.getText().toString().trim();
+
+        showProgressDialog();
 
         if(!TextUtils.isEmpty(userEmail) && !TextUtils.isEmpty(userPassword))
         {
@@ -59,11 +62,14 @@ public class SignInActivity extends AppCompatActivity {
                         Intent i = new Intent(SignInActivity.this, MainActivity.class);
                         startActivity(i);
                         //Send to Main menu
+
+                        Utils.setPassword(SignInActivity.this, password.getText().toString());
                     }
                     else
                     {
                         Toast.makeText(SignInActivity.this, task.getException().toString(), Toast.LENGTH_SHORT).show();
                     }
+                    hideProgressDialog();
                 }
             });
         }

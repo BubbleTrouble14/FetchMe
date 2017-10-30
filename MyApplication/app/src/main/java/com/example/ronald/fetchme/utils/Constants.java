@@ -7,4 +7,6 @@ package com.example.ronald.fetchme.utils;
 public class Constants
 {
     public static final String USER_KEY = "users";
+    public static final String PASSWORD = "password";
+
 }

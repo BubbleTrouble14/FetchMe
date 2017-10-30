@@ -4,7 +4,7 @@ package com.example.ronald.fetchme.models;
  * Created by ronald on 10/18/2017.
  */
 
-import com.google.firebase.database.IgnoreExtraProperties;
+        import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
 public class User {

@@ -64,25 +64,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mAuth = FirebaseAuth.getInstance();
         mDatabase =  FirebaseDatabase.getInstance().getReference(Constants.USER_KEY);
 
-        mDatabase.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot)
-            {
-                if (dataSnapshot.getValue() != null) {
-                    User user = dataSnapshot.getValue(User.class);
-                    Glide.with(MainActivity.this)
-                            .load(user.photo_url)
-                            .into(profile_picture);
-                    txtEmail.setText(user.email);
-                    txtUser.setText(user.username);
+        if(mAuth.getCurrentUser() != null) {
+            mDatabase.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.getValue() != null) {
+                        User user = dataSnapshot.getValue(User.class);
+                        Glide.with(MainActivity.this)
+                                .load(user.photo_url)
+                                .into(profile_picture);
+                        txtEmail.setText(user.email);
+                        txtUser.setText(user.username);
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
+                }
+            });
+        }
+        else
+        {
+            startActivity(new Intent(this, AuthenticationActivity.class));
+        }
     }
 
     @Override

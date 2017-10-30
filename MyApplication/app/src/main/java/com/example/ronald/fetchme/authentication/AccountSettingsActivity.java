@@ -1,11 +1,12 @@
 package com.example.ronald.fetchme.authentication;
 
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -14,25 +15,29 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
 import com.example.ronald.fetchme.R;
 import com.example.ronald.fetchme.models.User;
 import com.example.ronald.fetchme.utils.Constants;
+import com.example.ronald.fetchme.utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-public class AccountSettingsActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener{
+public class AccountSettingsActivity extends BaseActivity implements FirebaseAuth.AuthStateListener{
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
@@ -68,12 +73,35 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
 
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance().getReference();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase = FirebaseDatabase.getInstance().getReference(Constants.USER_KEY);
         mAuthListener = this;
 
-        Glide.with(this)
-                .load(mAuth.getCurrentUser().getPhotoUrl())
-                .into(picture);
+        mDatabase.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.getValue() != null) {
+                    //Prevent Crashing when it thinks the activity is destroyed
+                    if(!AccountSettingsActivity.this.isFinishing()) {
+                        User user = dataSnapshot.getValue(User.class);
+                        Glide.with(AccountSettingsActivity.this)
+                                .load(user.photo_url)
+                                .into(picture);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Glide.with(getApplicationContext()).pauseRequests();
     }
 
     @Override
@@ -86,8 +114,7 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
                 final Uri uri = data.getData();
                 final StorageReference filePath = mStorage.child(Constants.USER_KEY).child(mAuth.getUid()).child("profile_image");
 
-                RequestOptions requestOptions = new RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL);
-                Glide.with(AccountSettingsActivity.this).load(uri).apply(requestOptions).into(picture);
+                showProgressDialog();
 
                 filePath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -97,22 +124,32 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
                             @Override
                             public void onSuccess(Uri uri)
                             {
-                                FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                                User user = new User(firebaseUser.getDisplayName(), firebaseUser.getEmail(), String.valueOf(uri), firebaseUser.getUid());
-                                mDatabase.child(Constants.USER_KEY).child(mAuth.getUid()).setValue(user);
+                                FirebaseUser user = mAuth.getCurrentUser();
 
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                         .setPhotoUri(uri)
                                         .build();
 
-                                mAuth.getCurrentUser().updateProfile(profileUpdates);
+                                user.updateProfile(profileUpdates)
+                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if (task.isSuccessful()) {
+                                                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                                                    User user = new User(firebaseUser.getDisplayName(), firebaseUser.getEmail(), String.valueOf(firebaseUser.getPhotoUrl()), firebaseUser.getUid());
+                                                    mDatabase.child(mAuth.getUid()).setValue(user);
+                                                    Toast.makeText(AccountSettingsActivity.this, "Successful", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
 
-                                Toast.makeText(AccountSettingsActivity.this, "Worked", Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
                                 Toast.makeText(AccountSettingsActivity.this, e.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
                             }
                         });
 
@@ -123,7 +160,60 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
         }
     }
 
+    public void onDeleteAccountClicked(View view)
+    {
+        FirebaseUser user = mAuth.getCurrentUser();
 
+        AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), Utils.getPassword(this));
+
+        user.reauthenticate(credential)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task)
+                    {
+                        if(task.isSuccessful()) {
+                            openDialogBox();
+                        }
+                        else
+                        {
+                            Toast.makeText(AccountSettingsActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void openDialogBox()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage("Are you sure you want to delete this account?")
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i)
+                    {
+                        mAuth.getCurrentUser().delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(AccountSettingsActivity.this, "User account deleted", Toast.LENGTH_SHORT).show();
+                                mDatabase.child(mAuth.getUid()).removeValue();
+                                finish();
+                                startActivity(new Intent(AccountSettingsActivity.this, AuthenticationActivity.class));
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(AccountSettingsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+              //  finish();
+            }
+        });
+        builder.show();
+    }
 
     @Override
     protected void onStart() {
@@ -166,57 +256,75 @@ public class AccountSettingsActivity extends AppCompatActivity implements Fireba
 
     public void onSaveAccountClicked(View v)
     {
-        FirebaseUser user = mAuth.getCurrentUser();
+        showProgressDialog();
 
         if (!validateForm()) {
             return;
         }
 
-//        AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), cur_pass.getText().toString());
-//
-//        user.reauthenticate(credential)
-//                .addOnCompleteListener(new OnCompleteListener<Void>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<Void> task)
-//                    {
-//                        if(task.isSuccessful()) {
-//                            FirebaseUser user = mAuth.getCurrentUser();
-//                            updatePassword(user);
-//                        }
-//                        else
-//                        {
-//                            Toast.makeText(ChangePasswordActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                });
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        AuthCredential credential = EmailAuthProvider.getCredential(firebaseUser.getEmail(), Utils.getPassword(this));
 
-        if(!TextUtils.equals(editText_name.getText().toString(), info[0]) || !TextUtils.equals(editText_surname.getText().toString(), info[1]))
-        {
-        user.updateProfile(new UserProfileChangeRequest.Builder()
-                .setDisplayName(editText_name.getText().toString() + " " + editText_surname.getText().toString())
-                .build())
+        firebaseUser.reauthenticate(credential)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful())
+                    public void onComplete(@NonNull Task<Void> task)
+                    {
+                        if(task.isSuccessful()) {
+                            updateUser();
+                        }
+                        else
                         {
-
+                            Toast.makeText(AccountSettingsActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            hideProgressDialog();
                         }
                     }
                 });
+    }
+
+    public void updateUser()
+    {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        String name = editText_name.getText().toString() + " " + editText_surname.getText().toString();
+        User user = new User(name, editText_email.getText().toString(), String.valueOf(firebaseUser.getPhotoUrl()), firebaseUser.getUid());
+
+        if(!TextUtils.equals(editText_name.getText().toString(), info[0]) || !TextUtils.equals(editText_surname.getText().toString(), info[1]))
+        {
+            mDatabase.child(mAuth.getUid()).setValue(user);
+            firebaseUser.updateProfile(new UserProfileChangeRequest.Builder()
+                    .setDisplayName(editText_name.getText().toString() + " " + editText_surname.getText().toString())
+                    .build())
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful())
+                            {
+                                Toast.makeText(AccountSettingsActivity.this, "Successfully changed Data", Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
+                            }
+                            else
+                            {
+                                Toast.makeText(AccountSettingsActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
+                            }
+                        }
+                    });
         }
 
-        if(!TextUtils.equals(editText_email.getText().toString(), user.getEmail())) {
-            user.updateEmail(editText_email.getText().toString())
+        if(!TextUtils.equals(editText_email.getText().toString(), firebaseUser.getEmail())) {
+            mDatabase.child(mAuth.getUid()).setValue(user);
+            firebaseUser.updateEmail(editText_email.getText().toString())
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
                                 Toast.makeText(AccountSettingsActivity.this, "Successfully changed Data", Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
                             }
                             else
                             {
                                 Toast.makeText(AccountSettingsActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                hideProgressDialog();
                             }
                         }
                     });

@@ -9,12 +9,16 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.ronald.fetchme.R;
+import com.example.ronald.fetchme.utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.securepreferences.SecurePreferences;
 
 public class ChangePasswordActivity extends AppCompatActivity {
 
@@ -27,9 +31,9 @@ public class ChangePasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
 
-        cur_pass = (EditText)findViewById(R.id.editText_change_password_current);
-        new_pass = (EditText)findViewById(R.id.editText_change_password_new);
-        repeat_new_pass = (EditText)findViewById(R.id.editText_change_password_repeat_new);
+        cur_pass = findViewById(R.id.editText_change_password_current);
+        new_pass = findViewById(R.id.editText_change_password_new);
+        repeat_new_pass = findViewById(R.id.editText_change_password_repeat_new);
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -68,11 +72,17 @@ public class ChangePasswordActivity extends AppCompatActivity {
         {
             if(!(TextUtils.equals(cur_pass.getText().toString(), new_pass.getText().toString())))
             {
-                user.updatePassword(new_pass.getText().toString()).addOnCompleteListener(new OnCompleteListener<Void>() {
+                user.updatePassword(new_pass.getText().toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
-                    public void onComplete(@NonNull Task<Void> task) {
+                    public void onSuccess(Void aVoid) {
                         Toast.makeText(ChangePasswordActivity.this, "Successful", Toast.LENGTH_SHORT).show();
+                        Utils.setPassword(ChangePasswordActivity.this, new_pass.getText().toString());
                         finish();
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(ChangePasswordActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
